@@ -6,6 +6,6 @@
 
   - Para instalação seguir os seguintes passos: 
 
-    git clone git@github.com:elipe-pereira/onedrive_compilado_ubuntu.git
-    tar -zcvf ondrive.tar.gz onedrive_compilado/*
-    tar -zxvf onderive.tar.gz -C /
+    >git clone git@github.com:elipe-pereira/onedrive_compilado_ubuntu.git
+    >tar -zcvf ondrive.tar.gz onedrive_compilado/*
+    >tar -zxvf onderive.tar.gz -C /
