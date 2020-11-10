@@ -8,6 +8,6 @@
 
     >git clone git@github.com:elipe-pereira/onedrive_compilado_ubuntu.git
     > 
-    >tar -zcvf ondrive.tar.gz onedrive_compilado/*
+    >(cd onedrive_compilado;tar -zcvf ../ondrive.tar.gz *;cd ../)
     >
     >tar -zxvf onderive.tar.gz -C /
