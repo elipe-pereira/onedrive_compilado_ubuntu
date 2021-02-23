@@ -1,7 +1,62 @@
 # Changelog
-
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
+
+## 2.4.10 - 2021-2-19
+### Fixed
+*   Catch database assertion when item path cannot be calculated
+*   Fix alpine Docker build so it uses the same golang alpine version
+*   Search all distinct drive id's rather than just default drive id for --get-file-link
+*   Use correct driveId value to query for changes when using --single-directory
+*   Improve upload handling of files for SharePoint sites and detecting when SharePoint modifies the file post upload
+*   Correctly handle '~' when present in 'log_dir' configuration option
+*   Fix logging output when handing downloaded new files
+*   Fix to use correct path offset for sync_list exclusion matching 
+
+### Added
+*   Add upload speed metrics when files are uploaded and clarify that 'data to transfer' is what is needed to be downloaded from OneDrive
+*   Add new config option to rate limit connection to OneDrive
+*   Support new file maximum upload size of 250GB
+*   Support sync_list matching full path root wildcard with exclusions to simplify sync_list configuration
+
+### Updated
+*   Rename Office365.md --> SharePoint-Shared-Libraries.md which better describes this document
+*   Updated Dockerfile config for arm64
+*   Updated documentation (various)
+
+## 2.4.9 - 2020-12-27
+### Fixed
+*   Fix to handle case where API provided deltaLink generates a further API error
+*   Fix application crash when unable to read a local file due to local file permissions
+*   Fix application crash when calculating the path length due to invalid UTF characters in local path
+*   Fix Docker build on Alpine due missing symbols due to using the edge version of ldc and ldc-runtime
+*   Fix application crash with --get-O365-drive-id when API response is restricted
+
+### Added
+*   Add debug log output of the configured URL's which will be used throughout the application to remove any ambiguity as to using incorrect URL's when making API calls
+*   Improve application startup when using --monitor when there is no network connection to the OneDrive API and only initialise application once OneDrive API is reachable
+*   Add Docker environment variable to allow --logout for re-authentication
+
+### Updated
+*   Remove duplicate code for error output functions and enhance error logging output
+*   Updated documentation
+
+## 2.4.8 - 2020-11-30
+### Fixed
+*   Fix to use config set option for 'remove_source_files' and 'skip_dir_strict_match' rather than ignore if set
+*   Fix download failure and crash due to incorrect local filesystem permissions when using mounted external devices
+*   Fix to not change permissions on pre-existing local directories
+*   Fix logging output when authentication authorisation fails to not say authorisation was successful
+*   Fix to check application_id before setting redirect URL when using specific Azure endpoints
+*   Fix application crash in --monitor mode due to 'Failed to stat file' when setgid is used on a directory and data cannot be read
+
+### Added
+*   Added advanced-usage.md to document advaced client usage such as multi account configurations and Windows dual-boot
+
+### Updated
+*   Updated --verbose logging output for config options when set
+*   Updated documentation (man page, USAGE.md, Office365.md, BusinessSharedFolders.md)
+
 ## 2.4.7 - 2020-11-09
 ### Fixed
 *   Fix debugging output for /delta changes available queries

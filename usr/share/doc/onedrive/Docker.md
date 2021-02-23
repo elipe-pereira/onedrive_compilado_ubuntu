@@ -155,6 +155,7 @@ docker run $firstRun --restart unless-stopped --name onedrive -v onedrive_conf:/
 | <B>ONEDRIVE_DEBUG_HTTPS</B> | Controls "--debug-https" switch on onedrive sync. Default is 0 | 1 |
 | <B>ONEDRIVE_RESYNC</B> | Controls "--resync" switch on onedrive sync. Default is 0 | 1 |
 | <B>ONEDRIVE_DOWNLOADONLY</B> | Controls "--download-only" switch on onedrive sync. Default is 0 | 1 |
+| <B>ONEDRIVE_LOGOUT</B> | Controls "--logout" switch. Default is 0 | 1 |
 
 ### Usage Examples
 **Verbose Output:**
@@ -172,6 +173,11 @@ docker container run -e ONEDRIVE_RESYNC=1 -v onedrive_conf:/onedrive/conf -v "${
 **Perform a --resync and --verbose:**
 ```bash
 docker container run -e ONEDRIVE_RESYNC=1 -e ONEDRIVE_VERBOSE=1 -v onedrive_conf:/onedrive/conf -v "${onedriveDir}:/onedrive/data" driveone/onedrive:latest
+```
+
+**Perform a --logout and re-authenticate:**
+```bash
+docker container run -e ONEDRIVE_LOGOUT=1 -v onedrive_conf:/onedrive/conf -v "${onedriveDir}:/onedrive/data" driveone/onedrive:latest
 ```
 
 ## Build instructions
@@ -196,7 +202,7 @@ free -h
 ```
 
 ### Building the Docker image
-You can also build your own image instead of pulling the one from dockerhub:
+You can also build your own image instead of pulling the one from [hub.docker.com](https://hub.docker.com/r/driveone/onedrive):
 ```bash
 git clone https://github.com/abraunegg/onedrive
 cd onedrive
@@ -208,11 +214,18 @@ Dockerfile-stretch or Dockerfile-alpine.  These [multi-stage builder
 pattern](https://docs.docker.com/develop/develop-images/multistage-build/)
 Dockerfiles require Docker version at least 17.05.
 
+#### How to build a Docker image based on Debian Stretch
+
 ``` bash
 docker build . -t local-ondrive-stretch -f contrib/docker/Dockerfile-stretch
 ```
-or
+#### How to build a Docker image based on Alpine Linux
 
 ``` bash
 docker build . -t local-ondrive-alpine -f contrib/docker/Dockerfile-alpine
+```
+#### How to build a Docker image for ARMHF (Raspberry Pi)
+
+``` bash
+docker build . -t local-onedrive-rpi -f contrib/docker/Dockerfile-rpi
 ```

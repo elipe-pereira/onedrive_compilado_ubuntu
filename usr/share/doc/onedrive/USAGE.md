@@ -1,4 +1,52 @@
 # Configuration and Usage of the OneDrive Free Client
+## Table of Contents
+- [Using the client](#using-the-client)
+  * [Upgrading from 'skilion' client](#upgrading-from-skilion-client)
+  * [Local File and Folder Naming Conventions](#local-file-and-folder-naming-conventions)
+  * [curl compatibility](#curl-compatibility)
+  * [Authorize the application with your OneDrive Account](#authorize-the-application-with-your-onedrive-account)
+  * [Show your configuration](#show-your-configuration)
+  * [Testing your configuration](#testing-your-configuration)
+  * [Performing a sync](#performing-a-sync)
+  * [Performing a selective directory sync](#performing-a-selective-directory-sync)
+  * [Performing a 'one-way' download sync](#performing-a-one-way-download-sync)
+  * [Performing a 'one-way' upload sync](#performing-a-one-way-upload-sync)
+  * [Increasing logging level](#increasing-logging-level)
+  * [Client Activity Log](#client-activity-log)
+  * [Notifications](#notifications)
+  * [Handling a OneDrive account password change](#handling-a-onedrive-account-password-change)
+- [Configuration](#configuration)
+  * [The default configuration](#the-default-configuration-file-is-listed-below)
+  * ['config' file configuration examples](#config-file-configuration-examples)
+    + [sync_dir](#sync_dir)
+    + [sync_dir directory and file permissions](#sync_dir-directory-and-file-permissions)
+    + [skip_dir](#skip_dir)
+    + [skip_file](#skip_file)
+    + [skip_dotfiles](#skip_dotfiles)
+    + [skip_symlinks](#skip_symlinks)
+    + [monitor_interval](#monitor_interval)
+    + [min_notify_changes](#min_notify_changes)
+    + [Selective sync via 'sync_list' file](#selective-sync-via-sync_list-file)
+  * [Configuring the client for 'single tenant application' use](#configuring-the-client-for-single-tenant-application-use)
+  * [Configuring the client to use older 'skilion' application identifier](#configuring-the-client-to-use-older-skilion-application-identifier)
+  * [How to 'skip' directories from syncing?](#how-to-skip-directories-from-syncing)
+  * [How to 'rate limit' the application to control bandwidth consumed for upload & download operations](#how-to-rate-limit-the-application-to-control-bandwidth-consumed-for-upload--download-operations)
+  * [Shared folders (OneDrive Personal)](#shared-folders-onedrive-personal)
+  * [Shared folders (OneDrive Business or Office 365)](#shared-folders-onedrive-business-or-office-365)
+  * [SharePoint / Office 365 Shared Libraries](#sharepoint--office-365-shared-libraries)
+- [Running 'onedrive' in 'monitor' mode](#running-onedrive-in-monitor-mode)
+- [Running 'onedrive' as a system service](#running-onedrive-as-a-system-service)
+  * [OneDrive service running as root user via init.d](#onedrive-service-running-as-root-user-via-initd)
+  * [OneDrive service running as root user via systemd (Arch, Ubuntu, Debian, OpenSuSE, Fedora)](#onedrive-service-running-as-root-user-via-systemd-arch-ubuntu-debian-opensuse-fedora)
+  * [OneDrive service running as root user via systemd (Red Hat Enterprise Linux, CentOS Linux)](#onedrive-service-running-as-root-user-via-systemd-red-hat-enterprise-linux-centos-linux)
+  * [OneDrive service running as a non-root user via systemd (All Linux Distributions)](#onedrive-service-running-as-a-non-root-user-via-systemd-all-linux-distributions)
+  * [OneDrive service running as a non-root user via systemd (with notifications enabled) (Arch, Ubuntu, Debian, OpenSuSE, Fedora)](#onedrive-service-running-as-a-non-root-user-via-systemd-with-notifications-enabled-arch-ubuntu-debian-opensuse-fedora)
+- [Additional Configuration](#additional-configuration)
+  * [Using multiple OneDrive accounts](#using-multiple-onedrive-accounts)
+  * [Access OneDrive service through a proxy](#access-onedrive-service-through-a-proxy)
+  * [Setup selinux for a sync folder outside of the home folder](#setup-selinux-for-a-sync-folder-outside-of-the-home-folder)
+- [All available commands](#all-available-commands)
+
 
 ## Using the client
 
@@ -256,7 +304,7 @@ This file does not get created by default, and should only be created if you wan
 
 See the [config](https://raw.githubusercontent.com/abraunegg/onedrive/master/config) file for the full list of options, and [All available commands](https://github.com/abraunegg/onedrive/blob/master/docs/USAGE.md#all-available-commands) for all possible keys and there default values.
 
-The default configuration file is listed below:
+### The default configuration file is listed below:
 ```text
 # Configuration for OneDrive Linux Client
 # This file contains the list of supported configuration fields
@@ -302,6 +350,7 @@ The default configuration file is listed below:
 # sync_business_shared_folders = "false"
 # sync_dir_permissions = "700"
 # sync_file_permissions = "600"
+# rate_limit = "131072"
 ```
 
 
@@ -418,7 +467,7 @@ skip_file = "~*|.~*|*.tmp|*.swp|*.blah|never_sync.file"
 **Note:** after changing `skip_file`, you must perform a full re-synchronization by adding `--resync` to your existing command line - for example: `onedrive --synchronize --resync`
 
 #### skip_dotfiles
-Example: 
+Example:
 ```text
 # skip_symlinks = "false"
 # debug_https = "false"
@@ -468,12 +517,18 @@ Each line of the file represents a relative path from your `sync_dir`. All files
 Here is an example of `sync_list`:
 ```text
 # sync_list supports comments
+# 
+# The ordering of entries is highly recommended - exclusions before inclusions
+#
+# Exclude temp folders under Documents
+!Documents/temp*
+# Exclude my secret data
+!/Secret_data/*
+#
 # Include my Backup folder
 Backup
 # Include Documents folder
 Documents/
-# Exclude temp folders under Documents
-!Documents/temp*
 # Include all PDF documents
 Documents/*.pdf
 # Include this single document
@@ -493,8 +548,28 @@ The following are supported for pattern matching and exclusion rules:
 *   Use the `*` to wildcard select any characters to match for the item to be included
 *   Use either `!` or `-` characters at the start of the line to exclude an otherwise included item
 
+To simplify 'exclusions' and 'inclusions', the following is also possible:
+```text
+# sync_list supports comments
+# 
+# The ordering of entries is highly recommended - exclusions before inclusions
+#
+# Exclude temp folders under Documents
+!Documents/temp*
+# Exclude my secret data
+!/Secret_data/*
+#
+# Include everything else
+/*
+```
 
-**Note:** after changing the sync_list, you must perform a full re-synchronization by adding `--resync` to your existing command line - for example: `onedrive --synchronize --resync`
+**Note:** After changing the sync_list, you must perform a full re-synchronization by adding `--resync` to your existing command line - for example: `onedrive --synchronize --resync`
+
+**Note:** In some circumstances, it may be required to sync all the individual files within the 'sync_dir', but due to frequent name change / addition / deletion of these files, it is not desirable to constantly change the 'sync_list' file to include / exclude these files and force a resync. To assist with this, enable the following in your configuration file:
+```text
+sync_root_files = "true"
+```
+This will tell the application to sync any file that it finds in your 'sync_dir' root by default.
 
 ### Configuring the client for 'single tenant application' use
 In some instances when using OneDrive Business Accounts, depending on the Azure organisational configuration, it will be necessary to configure the client as a 'single tenant application'. 
@@ -508,6 +583,20 @@ application_id = "your.application.id.guid"
 azure_tenant_id = "your.azure.tenant.name"
 # sync_business_shared_folders = "false"
 ```
+
+### Configuring the client to use older 'skilion' application identifier
+In some instances it may be desirable to utilise the older 'skilion' application identifier to avoid authorising a new application ID within Microsoft Azure environments.
+To configure this, update the 'config' file with the old Application ID, then this will be used for the authentication process.
+```text
+# skip_dir_strict_match = "false"
+application_id = "22c49a0d-d21c-4792-aed1-8f163c982546"
+# resync = "false"
+# bypass_data_preservation = "false"
+```
+**Note:** The application will now use the older 'skilion' client identifier, however this may increase your chances of getting a OneDrive 429 error.
+
+**Note:** After changing the 'application_id' you will need to restart any 'onedrive' process you have running, and potentially issue a `--logout` to re-auth the client with this updated application ID.
+
 
 ### How to 'skip' directories from syncing?
 There are several mechanisms available to 'skip' a directory from the sync process:
@@ -527,6 +616,27 @@ check_nosync = "true"
 # disable_notifications = "false"
 ```
 
+### How to 'rate limit' the application to control bandwidth consumed for upload & download operations
+To minimise the Internet bandwidth for upload and download operations, you can configure the 'rate_limit' option within the config file.
+
+Example valid values for this are as follows:
+* 131072 	= 128 KB/s - minimum for basic application operations to prevent timeouts
+* 262144 	= 256 KB/s
+* 524288	= 512 KB/s
+* 1048576 	= 1 MB/s
+* 10485760 	= 10 MB/s
+* 104857600 = 100 MB/s
+
+Example:
+```text
+# sync_business_shared_folders = "false"
+# sync_dir_permissions = "700"
+# sync_file_permissions = "600"
+rate_limit = "131072"
+```
+
+**Note:** A number greater than '131072' is a valid value, with '104857600' being tested as an upper limit.
+
 ### Shared folders (OneDrive Personal)
 Folders shared with you can be synced by adding them to your OneDrive. To do that open your Onedrive, go to the Shared files list, right click on the folder you want to sync and then click on "Add to my OneDrive".
 
@@ -534,7 +644,7 @@ Folders shared with you can be synced by adding them to your OneDrive. To do tha
 Refer to [./BusinessSharedFolders.md](BusinessSharedFolders.md) for configuration assistance.
 
 ### SharePoint / Office 365 Shared Libraries
-Refer to [./Office365.md](Office365.md) for configuration assistance.
+Refer to [./SharePoint-Shared-Libraries.md](SharePoint-Shared-Libraries.md) for configuration assistance.
 
 ## Running 'onedrive' in 'monitor' mode
 Monitor mode (`--monitor`) allows the onedrive process to continually monitor your local file system for changes to files.
@@ -631,7 +741,7 @@ journalctl --unit=onedrive@<username> -f
 In some cases you may wish to receive GUI notifications when using the client when logged in as a non-root user. In this case, follow the directions below:
 
 1. Login via graphical UI as user you wish to enable the service for
-2. Disable any `onedive@` service files for your username - eg:
+2. Disable any `onedrive@` service files for your username - eg:
 ```text
 sudo systemctl stop onedrive@alex.service
 sudo systemctl disable onedrive@alex.service
@@ -651,42 +761,7 @@ journalctl --user-unit=onedrive -f
 
 ## Additional Configuration
 ### Using multiple OneDrive accounts
-You can run multiple instances of the application by specifying a different config directory in order to handle multiple OneDrive accounts. For example, if you have a work and a personal account, you can run the onedrive command using the --confdir parameter. Here is an example:
-
-```text
-onedrive --synchronize --verbose --confdir="~/.config/onedrivePersonal" &
-onedrive --synchronize --verbose --confdir="~/.config/onedriveWork" &
-```
-or 
-```text
-onedrive --monitor --verbose --confdir="~/.config/onedrivePersonal" &
-onedrive --monitor --verbose --confdir="~/.config/onedriveWork" &
-```
-
-*   `--synchronize` does a one-time sync
-*   `--monitor` keeps the application running and monitoring for changes both local and remote
-*   `&` puts the application in background and leaves the terminal interactive
-
-**Important:** For each configuration, change the 'sync_dir' to a new value, unique for each specific configuration. Leaving this at the default of `sync_dir = "~/OneDrive"` will cause all data from both accounts to be synced to the same folder, then to each other.
-
-### Automatic syncing of both OneDrive accounts
-In order to automatically start syncing your OneDrive accounts, you will need to create a service file for each account. From the applicable 'user systemd folder':
-*   RHEL / CentOS: `/usr/lib/systemd/system`
-*   Others: `/usr/lib/systemd/user`
-
-```text
-cp onedrive.service onedrive-work.service
-```
-And edit the line beginning with `ExecStart` so that the confdir mirrors the one you used above:
-```text
-ExecStart=/usr/local/bin/onedrive --monitor --confdir="/path/to/config/dir"
-```
-Then you can safely run these commands:
-```text
-systemctl --user enable onedrive-work
-systemctl --user start onedrive-work
-```
-Repeat these steps for each OneDrive account that you wish to use.
+Refer to [./advanced-usage.md](advanced-usage.md) for configuration assistance.
 
 ### Access OneDrive service through a proxy
 If you have a requirement to run the client through a proxy, there are a couple of ways to achieve this:
@@ -725,7 +800,6 @@ sudo restorecon -R -v /path/to/onedriveSyncFolder
 ```
 
 ## All available commands
-
 Output of `onedrive --help`
 ```text
 OneDrive - a client for OneDrive Cloud Services
